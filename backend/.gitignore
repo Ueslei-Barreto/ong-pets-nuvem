@@ -6,3 +6,4 @@ build/
 uploads/
 *.log
 "@ | Out-File -Encoding utf8 .gitignore
+Add-Content .gitignore "`nbackend_nuvem/`n*.docx`n.gitignore.txt"
