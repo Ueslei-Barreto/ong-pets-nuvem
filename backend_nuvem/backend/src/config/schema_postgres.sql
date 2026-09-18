@@ -1,4 +1,11 @@
+-- ============================================================
+-- ONG Pets na Nuvem - Schema PostgreSQL (Supabase)
+-- Execute no SQL Editor do Supabase, de uma vez.
+-- ============================================================
 
+-- ------------------------------------------------------------
+-- 1. ONGs  (tabela nova - o coracao da mudanca multi-organizacao)
+-- ------------------------------------------------------------
 CREATE TABLE ongs (
   id            SERIAL PRIMARY KEY,
   nome          VARCHAR(150) NOT NULL,
@@ -15,7 +22,9 @@ CREATE TABLE ongs (
   created_at    TIMESTAMPTZ DEFAULT NOW()
 );
 
-
+-- ------------------------------------------------------------
+-- 2. Usuarios  (cada admin pertence a UMA ong)
+-- ------------------------------------------------------------
 CREATE TABLE usuarios (
   id         SERIAL PRIMARY KEY,
   ong_id     INT NOT NULL REFERENCES ongs(id) ON DELETE CASCADE,
@@ -26,6 +35,9 @@ CREATE TABLE usuarios (
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- ------------------------------------------------------------
+-- 3. Pets  (ganha ong_id e adotado_em)
+-- ------------------------------------------------------------
 CREATE TABLE pets (
   id         SERIAL PRIMARY KEY,
   ong_id     INT NOT NULL REFERENCES ongs(id) ON DELETE CASCADE,
@@ -43,12 +55,15 @@ CREATE TABLE pets (
   usuario_id INT REFERENCES usuarios(id) ON DELETE SET NULL,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW(),
-  adotado_em TIMESTAMPTZ        
+  adotado_em TIMESTAMPTZ          -- usado no indicador de tempo medio ate a adocao
 );
 
 CREATE INDEX idx_pets_ong    ON pets(ong_id);
 CREATE INDEX idx_pets_status ON pets(status);
 
+-- ------------------------------------------------------------
+-- 4. Adocoes  (ong_id redundante de proposito: evita join no filtro)
+-- ------------------------------------------------------------
 CREATE TABLE adocoes (
   id             SERIAL PRIMARY KEY,
   pet_id         INT NOT NULL REFERENCES pets(id) ON DELETE CASCADE,
@@ -63,7 +78,10 @@ CREATE TABLE adocoes (
 
 CREATE INDEX idx_adocoes_ong ON adocoes(ong_id);
 
-
+-- ------------------------------------------------------------
+-- 5. Dados de demonstracao: 3 ONGs, 3 admins, 6 pets
+--    Senha de todos os admins: admin123
+-- ------------------------------------------------------------
 INSERT INTO ongs (nome, cnpj, email_contato, telefone, cep, logradouro, bairro, cidade, uf, descricao) VALUES
   ('Patas do Vale',    '11.111.111/0001-11', 'contato@patasdovale.org',  '(12) 3921-0001', '12244-000', 'Av. Shishima Hifumi', 'Urbanova',  'Sao Jose dos Campos', 'SP', 'Resgate e reabilitacao de caes e gatos em situacao de rua.'),
   ('Amigo Fiel',       '22.222.222/0001-22', 'contato@amigofiel.org',    '(12) 3653-0002', '12308-000', 'Rua Barao de Jacareí', 'Centro',   'Jacarei',             'SP', 'Lar temporario e feiras de adocao mensais.'),
@@ -82,3 +100,9 @@ INSERT INTO pets (ong_id, nome, especie, raca, idade_anos, porte, sexo, descrica
   (3, 'Thor',    'cachorro', 'Pastor',     4, 'grande',  'macho', 'Precisa de espaco e caminhadas diarias.',    TRUE,  TRUE,  'disponivel', 3),
   (3, 'Luna',    'cachorro', 'Vira-lata',  1, 'pequeno', 'femea', 'Filhote resgatada, muito sociavel.',         FALSE, FALSE, 'disponivel', 3);
 
+-- ------------------------------------------------------------
+-- 6. Conferencia rapida do isolamento por ONG
+-- ------------------------------------------------------------
+-- SELECT o.nome AS ong, COUNT(p.id) AS pets
+-- FROM ongs o LEFT JOIN pets p ON p.ong_id = o.id
+-- GROUP BY o.nome ORDER BY o.nome;
